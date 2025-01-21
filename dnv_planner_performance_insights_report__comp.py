@@ -120,8 +120,4 @@ from io import BytesIO  # Import BytesIO for in-memory buffer handling
 # if __name__ == "__main__":
 #     main()
 
-!curl https://loca.lt/mytunnelpassword
 
-!streamlit run app.py &>/content/logs.txt &
-
-!npx localtunnel --port 8501
