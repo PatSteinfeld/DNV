@@ -7,13 +7,14 @@ Original file is located at
     https://colab.research.google.com/drive/1uGLsO8dyafiMH7-YX34ssNQgcb6W9ALa
 """
 
-!pip install streamlit
+
 import pandas as pd
 import streamlit as st
 from io import BytesIO  # Import BytesIO for in-memory buffer handling
 
 # Commented out IPython magic to ensure Python compatibility.
 # %%writefile app.py
+# !pip install streamlit
 # import streamlit as st
 # import pandas as pd
 # from io import BytesIO  # Import BytesIO for in-memory buffer handling
