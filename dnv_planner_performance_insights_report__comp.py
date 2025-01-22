@@ -16,7 +16,7 @@ def main():
         new_data = pd.read_excel(new_file)
 
         # Required columns
-        required_columns = ["Split Man-Days", "Activity Sub Status", "Split MD Date Year-Month Label", "Project Planner"]
+        required_columns = ["Split Man-Days", "Activity Sub Status", "Split MD Date Year-Month Label", "Project Planner","Activity Name","Project Status"]
 
         # Check if required columns exist
         if not all(col in old_data.columns for col in required_columns):
@@ -33,32 +33,43 @@ def main():
 
         # Creating new column to categorize man-days
         od["Type"] = od["Activity Sub Status"].apply(lambda x: "Secured" if x  == "Customer accepted" else "Unsecured" )
-
+        od["RC_Status"] = od.apply(lambda row: "RC Not available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"] else ("RC available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed","Review In Progress"] else "Not An RC"), axis=1)
         nw["Type"] = nw["Activity Sub Status"].apply(lambda x: "Secured" if x  == "Customer accepted" else "Unsecured" )
-
+        nw["RC_Status"] = od.apply(lambda row: "RC Not available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"] else ("RC available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed","Review In Progress"] else "Not An RC"), axis=1)
 
         old_res = od.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'Type'])['Split Man-Days'].sum().reset_index()
         old_res.columns = ['Planner', 'Month', 'Type', 'Man-Days']
+        old_res_1 = od.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'RC_Status'])['Split Man-Days'].sum().reset_index()
+        old_res_1.columns = ['Planner', 'Month', 'RC_Status', 'RC_Man-Days']
         new_res = nw.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'Type'])['Split Man-Days'].sum().reset_index()
         new_res.columns = ['Planner', 'Month', 'Type', 'Man-Days']
+        new_res_1 = nw.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'RC_Status'])['Split Man-Days'].sum().reset_index()
+        new_res_1.columns = ['Planner', 'Month', 'RC_Status', 'RC_Man-Days']
 
         comparison_df = pd.merge(
-        old_res,
-        new_res,
-        on=['Planner', 'Month', 'Type'],
-        suffixes=('_old', '_new'),
-        how='outer'  # Use 'outer' to include missing rows in either file
+            old_res,
+            new_res,
+            on=['Planner', 'Month', 'Type'],
+            suffixes=('_old', '_new'),
+            how='outer'  # Use 'outer' to include missing rows in either file
         )
-
+        comparison_df_1 = pd.merge(
+            old_res_1,
+            new_res_1,
+            on=['Planner', 'Month', 'RC_Status'],
+            suffixes=('_old', '_new'),
+            how='outer'  # Use 'outer' to include missing rows in either file
+        )
+       
 
         # Calculate the difference in Split Man-Days
-        comparison_df['Man-Day_Moved'] = comparison_df['Man-Days_new'] - comparison_df['Man-Days_old']
+        comparison_df['Man-Days_Moved'] = comparison_df['Man-Days_new'] - comparison_df['Man-Days_old']
 
         # Pivot table to restructure the data
         pivot_df = comparison_df.pivot_table(
             index=['Planner', 'Month'],
             columns='Type',
-            values=['Man-Days_old', 'Man-Days_new', 'Man-Day_Moved'], # Fixed: Changed 'Man-Day_Moved' to 'Man-Day_Difference'
+            values=['Man-Days_old', 'Man-Days_new', 'Man-Days_Moved'], # Fixed: Changed 'Man-Day_Moved' to 'Man-Day_Difference'
             aggfunc='sum',
             fill_value=0  # Fill missing values with 0
         )
@@ -71,15 +82,47 @@ def main():
         pivot_df['Total_Man-Days_old'] = pivot_df.get('Man-Days_old_Secured', 0) + pivot_df.get('Man-Days_old_Unsecured', 0)
         pivot_df['Total_Man-Days_new'] = pivot_df.get('Man-Days_new_Secured', 0) + pivot_df.get('Man-Days_new_Unsecured', 0)
         pivot_df['Total_Man-Days Moved'] = pivot_df['Total_Man-Days_new'] - pivot_df['Total_Man-Days_old']
+        pivot_df['secured vs portfolio(%)']=pivot_df['Man-Days_new_Unsecured']/pivot_df['Total_Man-Days_new']*100
+        # Sort by Planner and Month
+        pivot_df = pivot_df[['Planner', 'Month',
+                             'Total_Man-Days Moved',
+                             'Man-Days_Moved_Secured',
+                             'Man-Days_Moved_Unsecured',
+                             'secured vs portfolio(%)']]
+        # Sort by Planner and Month
+        pivot_df = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
+
+        comparison_df_1['RC_Man-Day_Moved'] = comparison_df_1['RC_Man-Days_new'] - comparison_df_1['RC_Man-Days_old']
+
+
+
+        # Pivot table to restructure the data
+        pivot_df_1 = comparison_df_1.pivot_table(
+            index=['Planner', 'Month'],
+            columns='RC_Status',
+            values=['RC_Man-Days_old', 'RC_Man-Days_new', 'RC_Man-Day_Moved'],
+            aggfunc='sum',
+            fill_value=0  # Fill missing values with 0
+        )
+
+        # Flatten multi-level columns
+        pivot_df_1.columns = [f'{col[0]}_{col[1]}' for col in pivot_df_1.columns]
+        pivot_df_1 = pivot_df_1.reset_index()
+
+        # Sort by Planner and Month using the columns present in pivot_df_1
+        # This line was causing the issue, so it's removed and replaced with the line below
+        # pivot_df_1 = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
+        pivot_df_1 = pivot_df_1.sort_values(by=['Planner', 'Month']).reset_index(drop=True)  # Sorting pivot_df_1
+
+        # Select desired columns from pivot_df_1. Note the changes in column names
+        pivot_df_1 = pivot_df_1[['Planner', 'Month',
+                              'RC_Man-Day_Moved_Not An RC', 
+                              'RC_Man-Day_Moved_RC Not available',
+                              'RC_Man-Day_Moved_RC available']] 
 
         # Sort by Planner and Month
-        pivot_df = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
-        pivot_df = pivot_df[['Planner', 'Month',
-                             'Total_Man-Days_old', 'Total_Man-Days_new', 'Total_Man-Days Moved',
-                             'Man-Days_old_Secured', 'Man-Days_new_Secured', 'Man-Day_Moved_Secured',
-                             'Man-Days_old_Unsecured', 'Man-Days_new_Unsecured', 'Man-Day_Moved_Unsecured']]
-        # Sort by Planner and Month
-        pivot_df = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
+        pivot_df_1 = pivot_df_1.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
+
 
         # Display results
         st.header("Comparison Results")
@@ -99,7 +142,24 @@ def main():
             file_name="comparison_results.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+        # Display results for "RC Specific"
+        st.header("RC Specific")
+        st.subheader("Month-wise Planner RC Performance")
+        st.dataframe(pivot_df_1) # Corrected variable name to pivot_df_1
 
+        # Convert "RC Specific" DataFrame to Excel in-memory buffer
+        output_2 = BytesIO()
+        with pd.ExcelWriter(output_2, engine='openpyxl') as writer:
+            pivot_df_1.to_excel(writer, index=False, sheet_name='RC Performance') # Corrected variable name to pivot_df_1
+        processed_data_2 = output_2.getvalue()
+
+        # Allow download of "RC Specific" results
+        st.download_button(
+            label="Download RC Specific Results as Excel",
+            data=processed_data_2,
+            file_name="rc_specific_results.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 if __name__ == "__main__":
     main()
 
