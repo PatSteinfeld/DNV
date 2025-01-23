@@ -9,7 +9,8 @@ Original file is located at
 
 import streamlit as st
 import pandas as pd
-from io import BytesIO  # Import BytesIO for in-memory buffer handling
+import tempfile
+
 # Define the Streamlit application
 def main():
     st.title("Planner Performance Insights")
@@ -25,7 +26,7 @@ def main():
         new_data = pd.read_excel(new_file)
 
         # Required columns
-        required_columns = ["Split Man-Days", "Activity Sub Status", "Split MD Date Year-Month Label", "Project Planner","Activity Name","Project Status"]
+        required_columns = ["Split Man-Days", "Activity Sub Status", "Split MD Date Year-Month Label", "Project Planner", "Activity Name", "Project Status"]
 
         # Check if required columns exist
         if not all(col in old_data.columns for col in required_columns):
@@ -41,10 +42,10 @@ def main():
         nw = new_data[required_columns]
 
         # Creating new column to categorize man-days
-        od["Type"] = od["Activity Sub Status"].apply(lambda x: "Secured" if x  == "Customer accepted" else "Unsecured" )
-        od["RC_Status"] = od.apply(lambda row: "RC Not available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"] else ("RC available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed","Review In Progress"] else "Not An RC"), axis=1)
-        nw["Type"] = nw["Activity Sub Status"].apply(lambda x: "Secured" if x  == "Customer accepted" else "Unsecured" )
-        nw["RC_Status"] = od.apply(lambda row: "RC Not available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"] else ("RC available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed","Review In Progress"] else "Not An RC"), axis=1)
+        od["Type"] = od["Activity Sub Status"].apply(lambda x: "Secured" if x == "Customer accepted" else "Unsecured")
+        od["RC_Status"] = od.apply(lambda row: "RC Not available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"] else ("RC available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed", "Review In Progress"] else "Not An RC"), axis=1)
+        nw["Type"] = nw["Activity Sub Status"].apply(lambda x: "Secured" if x == "Customer accepted" else "Unsecured")
+        nw["RC_Status"] = nw.apply(lambda row: "RC Not available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"] else ("RC available" if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed", "Review In Progress"] else "Not An RC"), axis=1)
 
         old_res = od.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'Type'])['Split Man-Days'].sum().reset_index()
         old_res.columns = ['Planner', 'Month', 'Type', 'Man-Days']
@@ -70,7 +71,6 @@ def main():
             how='outer'  # Use 'outer' to include missing rows in either file
         )
 
-
         # Calculate the difference in Split Man-Days
         comparison_df['Man-Days_Moved'] = comparison_df['Man-Days_new'] - comparison_df['Man-Days_old']
 
@@ -78,7 +78,7 @@ def main():
         pivot_df = comparison_df.pivot_table(
             index=['Planner', 'Month'],
             columns='Type',
-            values=['Man-Days_old', 'Man-Days_new', 'Man-Days_Moved'], # Fixed: Changed 'Man-Day_Moved' to 'Man-Day_Difference'
+            values=['Man-Days_old', 'Man-Days_new', 'Man-Days_Moved'],
             aggfunc='sum',
             fill_value=0  # Fill missing values with 0
         )
@@ -87,25 +87,21 @@ def main():
         pivot_df.columns = [f'{col[0]}_{col[1]}' for col in pivot_df.columns]
         pivot_df = pivot_df.reset_index()
 
-        # Use `.get` to handle potential missing columns
         pivot_df['Total_Man-Days_old'] = pivot_df.get('Man-Days_old_Secured', 0) + pivot_df.get('Man-Days_old_Unsecured', 0)
         pivot_df['Total_Man-Days_new'] = pivot_df.get('Man-Days_new_Secured', 0) + pivot_df.get('Man-Days_new_Unsecured', 0)
         pivot_df['Total_Man-Days Moved'] = pivot_df['Total_Man-Days_new'] - pivot_df['Total_Man-Days_old']
-        pivot_df['secured vs portfolio(%)']=pivot_df['Man-Days_new_Unsecured']/pivot_df['Total_Man-Days_new']*100
-        # Sort by Planner and Month
+        pivot_df['secured vs portfolio(%)'] = pivot_df['Man-Days_new_Unsecured'] / pivot_df['Total_Man-Days_new'] * 100
+
         pivot_df = pivot_df[['Planner', 'Month',
                              'Total_Man-Days Moved',
                              'Man-Days_Moved_Secured',
                              'Man-Days_Moved_Unsecured',
                              'secured vs portfolio(%)']]
-        # Sort by Planner and Month
+
         pivot_df = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
 
         comparison_df_1['RC_Man-Day_Moved'] = comparison_df_1['RC_Man-Days_new'] - comparison_df_1['RC_Man-Days_old']
 
-
-
-        # Pivot table to restructure the data
         pivot_df_1 = comparison_df_1.pivot_table(
             index=['Planner', 'Month'],
             columns='RC_Status',
@@ -114,64 +110,52 @@ def main():
             fill_value=0  # Fill missing values with 0
         )
 
-        # Flatten multi-level columns
         pivot_df_1.columns = [f'{col[0]}_{col[1]}' for col in pivot_df_1.columns]
         pivot_df_1 = pivot_df_1.reset_index()
 
-        # Sort by Planner and Month using the columns present in pivot_df_1
-        # This line was causing the issue, so it's removed and replaced with the line below
-        # pivot_df_1 = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
-        pivot_df_1 = pivot_df_1.sort_values(by=['Planner', 'Month']).reset_index(drop=True)  # Sorting pivot_df_1
-
-        # Select desired columns from pivot_df_1. Note the changes in column names
         pivot_df_1 = pivot_df_1[['Planner', 'Month',
+                                 'RC_Man-Day_Moved_RC Not available',
+                                 'RC_Man-Day_Moved_RC available']]
 
-                              'RC_Man-Day_Moved_RC Not available',
-                              'RC_Man-Day_Moved_RC available']]
-
-        # Sort by Planner and Month
         pivot_df_1 = pivot_df_1.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
-
 
         # Display results
         st.header("Comparison Results")
         st.subheader("Month-wise Planner Performance Comparison")
         st.dataframe(pivot_df)
 
-        # Convert DataFrame to Excel in-memory buffer
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            pivot_df.to_excel(writer, index=False, sheet_name='Comparison Results')
-        processed_data = output.getvalue()
+        # Save "Comparison Results" to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmpfile:
+            with pd.ExcelWriter(tmpfile.name, engine='openpyxl') as writer:
+                pivot_df.to_excel(writer, index=False, sheet_name='Comparison Results')
 
-        # Allow download of results
-        st.download_button(
-            label="Download Comparison Results as Excel",
-            data=processed_data,
-            file_name="comparison_results.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
+            st.download_button(
+                label="Download Comparison Results as Excel",
+                data=tmpfile.name,
+                file_name="comparison_results.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+
         # Display results for "RC Specific"
         st.header("RC Specific")
         st.subheader("Month-wise Planner RC Performance")
-        st.dataframe(pivot_df_1) # Corrected variable name to pivot_df_1
+        st.dataframe(pivot_df_1)
 
-        # Convert "RC Specific" DataFrame to Excel in-memory buffer
-        output_2 = BytesIO()
-        with pd.ExcelWriter(output_2, engine='openpyxl') as writer:
-            pivot_df_1.to_excel(writer, index=False, sheet_name='RC Performance') # Corrected variable name to pivot_df_1
-        processed_data_2 = output_2.getvalue()
+        # Save "RC Specific" to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmpfile:
+            with pd.ExcelWriter(tmpfile.name, engine='openpyxl') as writer:
+                pivot_df_1.to_excel(writer, index=False, sheet_name='RC Performance')
 
-        # Allow download of "RC Specific" results
-        st.download_button(
-            label="Download RC Specific Results as Excel",
-            data=processed_data_2,
-            file_name="rc_specific_results.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
+            st.download_button(
+                label="Download RC Specific Results as Excel",
+                data=tmpfile.name,
+                file_name="rc_specific_results.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
 
 if __name__ == "__main__":
     main()
+
 
 
 
