@@ -181,8 +181,4 @@ from io import BytesIO  # Import BytesIO for in-memory buffer handling
 #     main()
 #
 
-!curl https://loca.lt/mytunnelpassword
 
-!streamlit run app.py &>/content/logs.txt &
-
-!npx localtunnel --port 8501
