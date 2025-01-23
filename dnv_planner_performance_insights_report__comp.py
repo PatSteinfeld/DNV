@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO  # Import BytesIO for in-memory buffer handling
-pip install openpyxl
+
 
 # Define the Streamlit application
 def main():
