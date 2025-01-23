@@ -9,7 +9,6 @@ Original file is located at
 
 import streamlit as st
 import pandas as pd
-import tempfile
 
 # Define the Streamlit application
 def main():
@@ -124,38 +123,28 @@ def main():
         st.subheader("Month-wise Planner Performance Comparison")
         st.dataframe(pivot_df)
 
-        # Save "Comparison Results" to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmpfile:
-            with pd.ExcelWriter(tmpfile.name, engine='openpyxl') as writer:
-                pivot_df.to_excel(writer, index=False, sheet_name='Comparison Results')
-
-            st.download_button(
-                label="Download Comparison Results as Excel",
-                data=tmpfile.name,
-                file_name="comparison_results.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
+        # Convert "Comparison Results" to an Excel file for download
+        comparison_file = pivot_df.to_excel(index=False, sheet_name='Comparison Results')
+        st.download_button(
+            label="Download Comparison Results as Excel",
+            data=comparison_file,
+            file_name="comparison_results.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
         # Display results for "RC Specific"
         st.header("RC Specific")
         st.subheader("Month-wise Planner RC Performance")
         st.dataframe(pivot_df_1)
 
-        # Save "RC Specific" to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmpfile:
-            with pd.ExcelWriter(tmpfile.name, engine='openpyxl') as writer:
-                pivot_df_1.to_excel(writer, index=False, sheet_name='RC Performance')
-
-            st.download_button(
-                label="Download RC Specific Results as Excel",
-                data=tmpfile.name,
-                file_name="rc_specific_results.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
+        # Convert "RC Specific" to an Excel file for download
+        rc_specific_file = pivot_df_1.to_excel(index=False, sheet_name='RC Performance')
+        st.download_button(
+            label="Download RC Specific Results as Excel",
+            data=rc_specific_file,
+            file_name="rc_specific_results.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
 if __name__ == "__main__":
     main()
-
-
-
-
