@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1usdtbYFU6hYLu20riR0NiG6NrnozcEgB
 """
 
-!pip install streamlit
+
 import pandas as pd
 import streamlit as st
 from io import BytesIO  # Import BytesIO for in-memory buffer handling
