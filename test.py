@@ -1,14 +1,16 @@
 import streamlit as st
 import pandas as pd
-from io import BytesIO  # Import BytesIO for in-memory buffer handling
-import hmac  # For password validation
+from io import BytesIO
+import hmac
+
 
 # Define the Streamlit application
 def main():
     def check_password():
-        """Returns `True` if the user had a correct password."""
+        """Returns `True` if the user entered a correct password."""
+
         def login_form():
-            """Form with widgets to collect user information"""
+            """Form with widgets to collect user information."""
             with st.form("Credentials"):
                 st.text_input("Username", key="username")
                 st.text_input("Password", type="password", key="password")
@@ -136,19 +138,22 @@ def main():
             new_res,
             on=["Planner", "Month", "Type"],
             suffixes=("_old", "_new"),
-            how="outer",  # Use 'outer' to include missing rows in either file
+            how="outer",
         )
         comparison_df_1 = pd.merge(
             old_res_1,
             new_res_1,
             on=["Planner", "Month", "RC_Status"],
             suffixes=("_old", "_new"),
-            how="outer",  # Use 'outer' to include missing rows in either file
+            how="outer",
         )
 
         # Calculate differences
         comparison_df["Man-Days_Diff"] = (
             comparison_df["Man-Days_new"] - comparison_df["Man-Days_old"]
+        )
+        comparison_df_1["RC_Man-Days_Diff"] = (
+            comparison_df_1["RC_Man-Days_new"] - comparison_df_1["RC_Man-Days_old"]
         )
 
         # Pivot tables
@@ -170,7 +175,8 @@ def main():
         # Prepare data for download
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            pivot_df.to_excel(writer, index=False, sheet_name="Comparison Results")
+            pivot_df.to_excel(writer, sheet_name="Comparison Results")
+            pivot_df_1.to_excel(writer, sheet_name="RC Comparison Results")
         processed_data = output.getvalue()
 
         # Download button
@@ -184,3 +190,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
