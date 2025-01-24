@@ -147,7 +147,7 @@ def main():
         )
 
         # Calculate differences
-        comparison_df["Man-Days_Moved"] = (
+        comparison_df["Man-Days_Diff"] = (
             comparison_df["Man-Days_new"] - comparison_df["Man-Days_old"]
         )
 
@@ -155,14 +155,14 @@ def main():
         pivot_df = comparison_df.pivot_table(
             index=["Planner", "Month"],
             columns="Type",
-            values=["Man-Days_old", "Man-Days_new", "Man-Days_Moved"],
+            values=["Man-Days_old", "Man-Days_new", "Man-Days_Diff"],
             aggfunc="sum",
             fill_value=0,
         )
         pivot_df_1 = comparison_df_1.pivot_table(
             index=["Planner", "Month"],
             columns="RC_Status",
-            values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Day_Moved"],
+            values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Day_Diff"],
             aggfunc="sum",
             fill_value=0,
         )
