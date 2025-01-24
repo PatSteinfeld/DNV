@@ -1,21 +1,21 @@
 import streamlit as st
 import pandas as pd
-from io import BytesIO
-import hmac
+from io import BytesIO  # Import BytesIO for in-memory buffer handling
+import hmac  # For password validation
 
 # Define the Streamlit application
 def main():
     def check_password():
-        """Returns `True` if the user enters the correct password."""
+        """Returns `True` if the user had a correct password."""
         def login_form():
-            """Form to collect user information."""
+            """Form with widgets to collect user information"""
             with st.form("Credentials"):
                 st.text_input("Username", key="username")
                 st.text_input("Password", type="password", key="password")
                 st.form_submit_button("Log in", on_click=password_entered)
 
         def password_entered():
-            """Checks whether the entered username and password are correct."""
+            """Checks whether a password entered by the user is correct."""
             if (
                 st.session_state["username"] in st.secrets["passwords"]
                 and hmac.compare_digest(
@@ -24,16 +24,16 @@ def main():
                 )
             ):
                 st.session_state["password_correct"] = True
-                del st.session_state["password"]  # Don't store the password.
+                del st.session_state["password"]  # Don't store the username or password.
                 del st.session_state["username"]
             else:
                 st.session_state["password_correct"] = False
 
-        # Return True if the username + password is validated
+        # Return True if the username + password is validated.
         if st.session_state.get("password_correct", False):
             return True
 
-        # Show inputs for username + password
+        # Show inputs for username + password.
         login_form()
         if "password_correct" in st.session_state:
             st.error("😕 User not known or password incorrect")
@@ -78,15 +78,15 @@ def main():
             )
             return
 
-        # Filter data to include only required columns and create copies
-        od = old_data[required_columns].copy()
-        nw = new_data[required_columns].copy()
+        # Filter data to include only required columns
+        od = old_data[required_columns]
+        nw = new_data[required_columns]
 
         # Creating new column to categorize man-days
-        od.loc[:, "Type"] = od["Activity Sub Status"].apply(
+        od["Type"] = od["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
-        od.loc[:, "RC_Status"] = od.apply(
+        od["RC_Status"] = od.apply(
             lambda row: "RC Not available"
             if row["Activity Name"] == "RC"
             and row["Project Status"] in ["Quote Revision", "Final PA Review"]
@@ -98,10 +98,10 @@ def main():
             ),
             axis=1,
         )
-        nw.loc[:, "Type"] = nw["Activity Sub Status"].apply(
+        nw["Type"] = nw["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
-        nw.loc[:, "RC_Status"] = nw.apply(
+        nw["RC_Status"] = nw.apply(
             lambda row: "RC Not available"
             if row["Activity Name"] == "RC"
             and row["Project Status"] in ["Quote Revision", "Final PA Review"]
@@ -114,7 +114,6 @@ def main():
             axis=1,
         )
 
-        # Grouping and summarizing data
         old_res = od.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])[
             "Split Man-Days"
         ].sum().reset_index()
@@ -132,7 +131,6 @@ def main():
         )["Split Man-Days"].sum().reset_index()
         new_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Man-Days"]
 
-        # Merging old and new data
         comparison_df = pd.merge(
             old_res,
             new_res,
@@ -151,6 +149,11 @@ def main():
         # Calculate differences
         comparison_df["Man-Days_Diff"] = (
             comparison_df["Man-Days_new"] - comparison_df["Man-Days_old"]
+        )
+
+        # Calculate differences for RC_Man-Days
+        comparison_df_1["RC_Man-Days_Diff"] = (
+            comparison_df_1["RC_Man-Days_new"] - comparison_df_1["RC_Man-Days_old"]
         )
 
         # Pivot tables
@@ -172,8 +175,8 @@ def main():
         # Prepare data for download
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            pivot_df.to_excel(writer, sheet_name="Comparison Results")
-            pivot_df_1.to_excel(writer, sheet_name="RC Comparison Results")
+            pivot_df.to_excel(writer, index=False, sheet_name="Comparison Results")
+            pivot_df_1.to_excel(writer, index=False, sheet_name="RC Comparison Results")
         processed_data = output.getvalue()
 
         # Download button
@@ -187,5 +190,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
