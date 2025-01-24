@@ -3,21 +3,19 @@ import pandas as pd
 from io import BytesIO
 import hmac
 
-
 # Define the Streamlit application
 def main():
     def check_password():
-        """Returns `True` if the user entered a correct password."""
-
+        """Returns `True` if the user enters the correct password."""
         def login_form():
-            """Form with widgets to collect user information."""
+            """Form to collect user information."""
             with st.form("Credentials"):
                 st.text_input("Username", key="username")
                 st.text_input("Password", type="password", key="password")
                 st.form_submit_button("Log in", on_click=password_entered)
 
         def password_entered():
-            """Checks whether a password entered by the user is correct."""
+            """Checks whether the entered username and password are correct."""
             if (
                 st.session_state["username"] in st.secrets["passwords"]
                 and hmac.compare_digest(
@@ -26,16 +24,16 @@ def main():
                 )
             ):
                 st.session_state["password_correct"] = True
-                del st.session_state["password"]  # Don't store the username or password.
+                del st.session_state["password"]  # Don't store the password.
                 del st.session_state["username"]
             else:
                 st.session_state["password_correct"] = False
 
-        # Return True if the username + password is validated.
+        # Return True if the username + password is validated
         if st.session_state.get("password_correct", False):
             return True
 
-        # Show inputs for username + password.
+        # Show inputs for username + password
         login_form()
         if "password_correct" in st.session_state:
             st.error("😕 User not known or password incorrect")
@@ -80,15 +78,15 @@ def main():
             )
             return
 
-        # Filter data to include only required columns
-        od = old_data[required_columns]
-        nw = new_data[required_columns]
+        # Filter data to include only required columns and create copies
+        od = old_data[required_columns].copy()
+        nw = new_data[required_columns].copy()
 
         # Creating new column to categorize man-days
-        od["Type"] = od["Activity Sub Status"].apply(
+        od.loc[:, "Type"] = od["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
-        od["RC_Status"] = od.apply(
+        od.loc[:, "RC_Status"] = od.apply(
             lambda row: "RC Not available"
             if row["Activity Name"] == "RC"
             and row["Project Status"] in ["Quote Revision", "Final PA Review"]
@@ -100,10 +98,10 @@ def main():
             ),
             axis=1,
         )
-        nw["Type"] = nw["Activity Sub Status"].apply(
+        nw.loc[:, "Type"] = nw["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
-        nw["RC_Status"] = nw.apply(
+        nw.loc[:, "RC_Status"] = nw.apply(
             lambda row: "RC Not available"
             if row["Activity Name"] == "RC"
             and row["Project Status"] in ["Quote Revision", "Final PA Review"]
@@ -116,6 +114,7 @@ def main():
             axis=1,
         )
 
+        # Grouping and summarizing data
         old_res = od.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])[
             "Split Man-Days"
         ].sum().reset_index()
@@ -133,27 +132,25 @@ def main():
         )["Split Man-Days"].sum().reset_index()
         new_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Man-Days"]
 
+        # Merging old and new data
         comparison_df = pd.merge(
             old_res,
             new_res,
             on=["Planner", "Month", "Type"],
             suffixes=("_old", "_new"),
-            how="outer",
+            how="outer",  # Use 'outer' to include missing rows in either file
         )
         comparison_df_1 = pd.merge(
             old_res_1,
             new_res_1,
             on=["Planner", "Month", "RC_Status"],
             suffixes=("_old", "_new"),
-            how="outer",
+            how="outer",  # Use 'outer' to include missing rows in either file
         )
 
         # Calculate differences
         comparison_df["Man-Days_Diff"] = (
             comparison_df["Man-Days_new"] - comparison_df["Man-Days_old"]
-        )
-        comparison_df_1["RC_Man-Days_Diff"] = (
-            comparison_df_1["RC_Man-Days_new"] - comparison_df_1["RC_Man-Days_old"]
         )
 
         # Pivot tables
@@ -190,4 +187,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
