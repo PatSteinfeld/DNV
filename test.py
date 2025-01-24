@@ -163,20 +163,20 @@ def main():
             values=["Man-Days_old", "Man-Days_new", "Man-Days_Diff"],
             aggfunc="sum",
             fill_value=0,
-        )
+        ).reset_index()  # Reset the index to avoid MultiIndex
         pivot_df_1 = comparison_df_1.pivot_table(
             index=["Planner", "Month"],
             columns="RC_Status",
             values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Days_Diff"],
             aggfunc="sum",
             fill_value=0,
-        )
+        ).reset_index()  # Reset the index to avoid MultiIndex
 
         # Prepare data for download
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            pivot_df.to_excel(writer, index=False, sheet_name="Comparison Results")
-            pivot_df_1.to_excel(writer, index=False, sheet_name="RC Comparison Results")
+            pivot_df.to_excel(writer, index=True, sheet_name="Comparison Results")
+            pivot_df_1.to_excel(writer, index=True, sheet_name="RC Comparison Results")
         processed_data = output.getvalue()
 
         # Download button
@@ -190,6 +190,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
