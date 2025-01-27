@@ -147,8 +147,17 @@ def main():
             fill_value=0,
         ).reset_index()
 
+        pivot_df_1 = comparison_df_1.pivot_table(
+            index=["Planner", "Month"],
+            columns="RC_Status",
+            values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Days_Diff"],
+            aggfunc="sum",
+            fill_value=0,
+        ).reset_index()
+
         # Flattening column names
         pivot_df.columns = ["_".join(col).strip("_") for col in pivot_df.columns]
+        pivot_df_1.columns = ["_".join(col).strip("_") for col in pivot_df_1.columns]
 
         # Adding additional columns
         pivot_df["Total_Man-Days_old"] = pivot_df.get("Man-Days_old_Secured", 0) + pivot_df.get("Man-Days_old_Unsecured", 0)
@@ -170,11 +179,13 @@ def main():
         # Output to Streamlit
         st.header("Comparison Results")
         st.dataframe(pivot_df)
+        st.dataframe(pivot_df_1)
 
         # Optional: Save and download results as Excel
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
             pivot_df.to_excel(writer, index=False, sheet_name="Comparison Results")
+            pivot_df_1.to_excel(writer, index=False, sheet_name="RC Comparison Results")
         st.download_button(
             label="Download Results",
             data=output.getvalue(),
