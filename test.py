@@ -31,7 +31,7 @@ def main():
 
         login_form()
         if "password_correct" in st.session_state:
-            st.error("😕 User not known or password incorrect")
+            st.error("\ud83d\ude15 User not known or password incorrect")
         return False
 
     if not check_password():
@@ -150,13 +150,11 @@ def main():
         ).reset_index()
 
         pivot_df.columns = [f"{col[0]}_{col[1]}" for col in pivot_df.columns]
-        pivot_df = pivot_df.reset_index()
         pivot_df["Total_Man-Days_old"] = pivot_df.get("Man-Days_old_Secured", 0) + pivot_df.get("Man-Days_old_Unsecured", 0)
         pivot_df["Total_Man-Days_new"] = pivot_df.get("Man-Days_new_Secured", 0) + pivot_df.get("Man-Days_new_Unsecured", 0)
         pivot_df["Total_Man-Days Diff"] = pivot_df["Total_Man-Days_new"] - pivot_df["Total_Man-Days_old"]
         pivot_df["secured vs portfolio(%)"] = pivot_df.get("Man-Days_new_Unsecured", 0) / pivot_df["Total_Man-Days_new"] * 100
 
-        # Validate required columns
         if not all(col in pivot_df.columns for col in ["Planner", "Month"]):
             st.error(
                 "The generated pivot table is missing required columns: ['Planner', 'Month'].\n"
@@ -182,9 +180,7 @@ def main():
         ).reset_index()
 
         pivot_df_1.columns = [f"{col[0]}_{col[1]}" for col in pivot_df_1.columns]
-        pivot_df_1 = pivot_df_1.reset_index()
 
-        # Validate required columns for pivot_df_1
         if not all(col in pivot_df_1.columns for col in ["Planner", "Month"]):
             st.error(
                 "The generated pivot table (pivot_df_1) is missing required columns: ['Planner', 'Month'].\n"
@@ -222,6 +218,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
