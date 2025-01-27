@@ -68,13 +68,13 @@ def main():
             )
             return
 
-        od = old_data[required_columns]
-        nw = new_data[required_columns]
+        od = old_data[required_columns].copy()  # Using .copy() to avoid the SettingWithCopyWarning
+        nw = new_data[required_columns].copy()  # Using .copy() to avoid the SettingWithCopyWarning
 
-        od["Type"] = od["Activity Sub Status"].apply(
+        od.loc[:, "Type"] = od["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
-        od["RC_Status"] = od.apply(
+        od.loc[:, "RC_Status"] = od.apply(
             lambda row: "RC Not available"
             if row["Activity Name"] == "RC"
             and row["Project Status"] in ["Quote Revision", "Final PA Review"]
@@ -86,10 +86,10 @@ def main():
             ),
             axis=1,
         )
-        nw["Type"] = nw["Activity Sub Status"].apply(
+        nw.loc[:, "Type"] = nw["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
-        nw["RC_Status"] = nw.apply(
+        nw.loc[:, "RC_Status"] = nw.apply(
             lambda row: "RC Not available"
             if row["Activity Name"] == "RC"
             and row["Project Status"] in ["Quote Revision", "Final PA Review"]
@@ -162,7 +162,7 @@ def main():
             )
             return
 
-        pivot_df = pivot_df[[
+        pivot_df = pivot_df[[ 
             "Planner", "Month",
             "Total_Man-Days Diff",
             "Man-Days_Diff_Secured",
@@ -188,7 +188,7 @@ def main():
             )
             return
 
-        pivot_df_1 = pivot_df_1[[
+        pivot_df_1 = pivot_df_1[[ 
             "Planner", "Month",
             "RC_Man-Days_Diff_RC Not available",
             "RC_Man-Days_Diff_RC available"
@@ -218,6 +218,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
