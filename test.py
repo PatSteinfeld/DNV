@@ -164,6 +164,19 @@ def main():
             aggfunc="sum",
             fill_value=0,
         ).reset_index()  # Reset the index to avoid MultiIndex
+
+        pivot_df['Total_Man-Days_old'] = pivot_df.get('Man-Days_old_Secured', 0) + pivot_df.get('Man-Days_old_Unsecured', 0)
+        pivot_df['Total_Man-Days_new'] = pivot_df.get('Man-Days_new_Secured', 0) + pivot_df.get('Man-Days_new_Unsecured', 0)
+        pivot_df['Total_Man-Days Diff'] = pivot_df['Total_Man-Days_new'] - pivot_df['Total_Man-Days_old']
+        pivot_df['secured vs portfolio(%)']=pivot_df['Man-Days_new_Unsecured']/pivot_df['Total_Man-Days_new']*100
+        
+                # Sort by Planner and Month
+        pivot_df = pivot_df[['Planner', 'Month',
+                             'Total_Man-Days Diff',
+                             'Man-Days_Diff_Secured',
+                             'Man-Days_Diff_Unsecured',
+                             'secured vs portfolio(%)']]
+
         pivot_df_1 = comparison_df_1.pivot_table(
             index=["Planner", "Month"],
             columns="RC_Status",
