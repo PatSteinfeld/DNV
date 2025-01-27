@@ -160,12 +160,12 @@ def main():
 
         # Sorting and selecting columns
         pivot_df = pivot_df[[
-            "Planner_", "Month_",
+            "Planner", "Month",
             "Total_Man-Days Diff",
             "Man-Days_Diff_Secured",
             "Man-Days_Diff_Unsecured",
             "secured vs portfolio(%)",
-        ]].sort_values(by=["Planner_", "Month_"]).reset_index(drop=True)
+        ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
 
         # Output to Streamlit
         st.header("Comparison Results")
