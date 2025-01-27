@@ -164,6 +164,26 @@ def main():
             aggfunc="sum",
             fill_value=0,
         ).reset_index()  # Reset the index to avoid MultiIndex
+
+                # Flatten multi-level columns
+        pivot_df.columns = [f'{col[0]}_{col[1]}' for col in pivot_df.columns]
+        pivot_df = pivot_df.reset_index()
+                # Use `.get` to handle potential missing columns
+        pivot_df['Total_Man-Days_old'] = pivot_df.get('Man-Days_old_Secured', 0) + pivot_df.get('Man-Days_old_Unsecured', 0)
+        pivot_df['Total_Man-Days_new'] = pivot_df.get('Man-Days_new_Secured', 0) + pivot_df.get('Man-Days_new_Unsecured', 0)
+        pivot_df['Total_Man-Days Diff'] = pivot_df['Total_Man-Days_new'] - pivot_df['Total_Man-Days_old']
+        pivot_df['secured vs portfolio(%)']=pivot_df['Man-Days_new_Unsecured']/pivot_df['Total_Man-Days_new']*100
+
+                # Sort by Planner and Month
+        pivot_df = pivot_df[['Planner', 'Month',
+                             'Total_Man-Days Diff',
+                             'Man-Days_Diff_Secured',
+                             'Man-Days_Diff_Unsecured',
+                             'secured vs portfolio(%)']]
+                # Sort by Planner and Month
+        pivot_df = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
+        
+        
         pivot_df_1 = comparison_df_1.pivot_table(
             index=["Planner", "Month"],
             columns="RC_Status",
@@ -178,6 +198,29 @@ def main():
             pivot_df.to_excel(writer, index=True, sheet_name="Comparison Results")
             pivot_df_1.to_excel(writer, index=True, sheet_name="RC Comparison Results")
         processed_data = output.getvalue()
+
+
+                # Flatten multi-level columns
+        pivot_df_1.columns = [f'{col[0]}_{col[1]}' for col in pivot_df_1.columns]
+        pivot_df_1 = pivot_df_1.reset_index()
+       
+        pivot_df_1 = pivot_df_1[['Planner', 'Month',
+
+                              'RC_Man-Day_Diff_RC Not available',
+                              'RC_Man-Day_Diff_RC available']]
+        # Sort by Planner and Month
+        pivot_df_1 = pivot_df_1.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
+
+
+                # Display results
+        st.header("Comparison Results")
+        st.subheader("Month-wise Planner Performance Comparison")
+        st.dataframe(pivot_df)
+
+                # Display results for "RC Specific"
+        st.header("RC Specific")
+        st.subheader("Month-wise Planner RC Performance")
+        st.dataframe(pivot_df_1) # Corrected variable name to pivot_df_1
 
         # Download button
         st.download_button(
