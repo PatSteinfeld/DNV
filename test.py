@@ -1,61 +1,55 @@
 import streamlit as st
 import pandas as pd
-from io import BytesIO  # Import BytesIO for in-memory buffer handling
-import hmac  # For password validation
+from io import BytesIO
+import hmac
 
-# Define the Streamlit application
 def main():
     def check_password():
-        """Returns `True` if the user had a correct password."""
+        """Validate the user credentials."""
+
         def login_form():
-            """Form with widgets to collect user information"""
-            with st.form("Credentials"):
+            with st.form("Login Form"):
                 st.text_input("Username", key="username")
                 st.text_input("Password", type="password", key="password")
-                st.form_submit_button("Log in", on_click=password_entered)
+                st.form_submit_button("Log In", on_click=validate_credentials)
 
-        def password_entered():
-            """Checks whether a password entered by the user is correct."""
+        def validate_credentials():
             if (
-                st.session_state["username"] in st.secrets["passwords"]
+                st.session_state.get("username") in st.secrets["passwords"]
                 and hmac.compare_digest(
-                    st.session_state["password"],
+                    st.session_state.get("password"),
                     st.secrets.passwords[st.session_state["username"]],
                 )
             ):
-                st.session_state["password_correct"] = True
-                del st.session_state["password"]  # Don't store the username or password.
-                del st.session_state["username"]
+                st.session_state["authenticated"] = True
+                st.session_state.pop("password", None)
+                st.session_state.pop("username", None)
             else:
-                st.session_state["password_correct"] = False
+                st.session_state["authenticated"] = False
 
-        # Return True if the username + password is validated.
-        if st.session_state.get("password_correct", False):
+        if st.session_state.get("authenticated", False):
             return True
 
-        # Show inputs for username + password.
         login_form()
-        if "password_correct" in st.session_state:
-            st.error("😕 User not known or password incorrect")
+
+        if "authenticated" in st.session_state and not st.session_state["authenticated"]:
+            st.error("Invalid username or password.")
+
         return False
 
     if not check_password():
         st.stop()
 
-    # Main Streamlit app starts here
     st.title("Planner Performance Insights")
 
-    # File upload section
     st.header("Upload Excel Files")
-    old_file = st.file_uploader("Upload the old data Excel file", type=["xlsx"])
-    new_file = st.file_uploader("Upload the new data Excel file", type=["xlsx"])
+    old_file = st.file_uploader("Upload the old data Excel file", type="xlsx")
+    new_file = st.file_uploader("Upload the new data Excel file", type="xlsx")
 
     if old_file and new_file:
-        # Read the uploaded files
         old_data = pd.read_excel(old_file)
         new_data = pd.read_excel(new_file)
 
-        # Required columns
         required_columns = [
             "Split Man-Days",
             "Activity Sub Status",
@@ -65,174 +59,102 @@ def main():
             "Project Status",
         ]
 
-        # Check if required columns exist
-        if not all(col in old_data.columns for col in required_columns):
-            st.error(
-                f"The old file is missing one or more required columns: {required_columns}"
+        for file_name, data in zip(["Old", "New"], [old_data, new_data]):
+            if not all(col in data.columns for col in required_columns):
+                st.error(f"The {file_name} file is missing one or more required columns: {required_columns}")
+                return
+
+        def process_data(data):
+            data = data[required_columns].copy()
+            data["Type"] = data["Activity Sub Status"].apply(
+                lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
             )
-            return
-
-        if not all(col in new_data.columns for col in required_columns):
-            st.error(
-                f"The new file is missing one or more required columns: {required_columns}"
+            data["RC_Status"] = data.apply(
+                lambda row: "RC Not available"
+                if row["Activity Name"] == "RC"
+                and row["Project Status"] in ["Quote Revision", "Final PA Review"]
+                else (
+                    "RC available"
+                    if row["Activity Name"] == "RC"
+                    and row["Project Status"] in ["Reviewed", "Review In Progress"]
+                    else "Not An RC"
+                ),
+                axis=1,
             )
-            return
+            return data
 
-        # Filter data to include only required columns
-        od = old_data[required_columns]
-        nw = new_data[required_columns]
+        old_data = process_data(old_data)
+        new_data = process_data(new_data)
 
-        # Creating new column to categorize man-days
-        od["Type"] = od["Activity Sub Status"].apply(
-            lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
-        )
-        od["RC_Status"] = od.apply(
-            lambda row: "RC Not available"
-            if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
-            else (
-                "RC available"
-                if row["Activity Name"] == "RC"
-                and row["Project Status"] in ["Reviewed", "Review In Progress"]
-                else "Not An RC"
-            ),
-            axis=1,
-        )
-        nw["Type"] = nw["Activity Sub Status"].apply(
-            lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
-        )
-        nw["RC_Status"] = nw.apply(
-            lambda row: "RC Not available"
-            if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
-            else (
-                "RC available"
-                if row["Activity Name"] == "RC"
-                and row["Project Status"] in ["Reviewed", "Review In Progress"]
-                else "Not An RC"
-            ),
-            axis=1,
-        )
+        def aggregate_data(data, group_cols, value_col, suffix):
+            aggregated = data.groupby(group_cols)[value_col].sum().reset_index()
+            aggregated.columns = group_cols + [f"{value_col}_{suffix}"]
+            return aggregated
 
-        old_res = od.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])[
-            "Split Man-Days"
-        ].sum().reset_index()
-        old_res.columns = ["Planner", "Month", "Type", "Man-Days"]
-        old_res_1 = od.groupby(
-            ["Project Planner", "Split MD Date Year-Month Label", "RC_Status"]
-        )["Split Man-Days"].sum().reset_index()
-        old_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Man-Days"]
-        new_res = nw.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])[
-            "Split Man-Days"
-        ].sum().reset_index()
-        new_res.columns = ["Planner", "Month", "Type", "Man-Days"]
-        new_res_1 = nw.groupby(
-            ["Project Planner", "Split MD Date Year-Month Label", "RC_Status"]
-        )["Split Man-Days"].sum().reset_index()
-        new_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Man-Days"]
+        old_agg = aggregate_data(
+            old_data, ["Project Planner", "Split MD Date Year-Month Label", "Type"], "Split Man-Days", "old"
+        )
+        new_agg = aggregate_data(
+            new_data, ["Project Planner", "Split MD Date Year-Month Label", "Type"], "Split Man-Days", "new"
+        )
 
         comparison_df = pd.merge(
-            old_res,
-            new_res,
-            on=["Planner", "Month", "Type"],
-            suffixes=("_old", "_new"),
-            how="outer",  # Use 'outer' to include missing rows in either file
+            old_agg,
+            new_agg,
+            on=["Project Planner", "Split MD Date Year-Month Label", "Type"],
+            how="outer",
         )
-        comparison_df_1 = pd.merge(
-            old_res_1,
-            new_res_1,
-            on=["Planner", "Month", "RC_Status"],
-            suffixes=("_old", "_new"),
-            how="outer",  # Use 'outer' to include missing rows in either file
-        )
-
-        # Calculate differences
         comparison_df["Man-Days_Diff"] = (
-            comparison_df["Man-Days_new"] - comparison_df["Man-Days_old"]
+            comparison_df["Split Man-Days_new"] - comparison_df["Split Man-Days_old"]
         )
 
-        # Calculate differences for RC_Man-Days
-        comparison_df_1["RC_Man-Days_Diff"] = (
-            comparison_df_1["RC_Man-Days_new"] - comparison_df_1["RC_Man-Days_old"]
-        )
-
-        # Pivot tables
         pivot_df = comparison_df.pivot_table(
-            index=["Planner", "Month"],
+            index=["Project Planner", "Split MD Date Year-Month Label"],
             columns="Type",
-            values=["Man-Days_old", "Man-Days_new", "Man-Days_Diff"],
+            values=["Split Man-Days_old", "Split Man-Days_new", "Man-Days_Diff"],
             aggfunc="sum",
             fill_value=0,
-        ).reset_index()  # Reset the index to avoid MultiIndex
+        )
+        pivot_df.columns = [f"{col[0]}_{col[1]}" for col in pivot_df.columns]
+        pivot_df.reset_index(inplace=True)
 
-                # Flatten multi-level columns
-        pivot_df.columns = [f'{col[0]}_{col[1]}' for col in pivot_df.columns]
-        pivot_df = pivot_df.reset_index()
-                # Use `.get` to handle potential missing columns
-        pivot_df['Total_Man-Days_old'] = pivot_df.get('Man-Days_old_Secured', 0) + pivot_df.get('Man-Days_old_Unsecured', 0)
-        pivot_df['Total_Man-Days_new'] = pivot_df.get('Man-Days_new_Secured', 0) + pivot_df.get('Man-Days_new_Unsecured', 0)
-        pivot_df['Total_Man-Days Diff'] = pivot_df['Total_Man-Days_new'] - pivot_df['Total_Man-Days_old']
-        pivot_df['secured vs portfolio(%)']=pivot_df['Man-Days_new_Unsecured']/pivot_df['Total_Man-Days_new']*100
+        pivot_df["Total_Man-Days_old"] = pivot_df.filter(like="Split Man-Days_old").sum(axis=1)
+        pivot_df["Total_Man-Days_new"] = pivot_df.filter(like="Split Man-Days_new").sum(axis=1)
+        pivot_df["Total_Man-Days_Diff"] = pivot_df["Total_Man-Days_new"] - pivot_df["Total_Man-Days_old"]
+        pivot_df["Secured_vs_Portfolio_%"] = (
+            pivot_df.get("Split Man-Days_new_Unsecured", 0)
+            / pivot_df["Total_Man-Days_new"]
+            * 100
+        ).fillna(0)
 
-                # Sort by Planner and Month
-        pivot_df = pivot_df[['Planner', 'Month',
-                             'Total_Man-Days Diff',
-                             'Man-Days_Diff_Secured',
-                             'Man-Days_Diff_Unsecured',
-                             'secured vs portfolio(%)']]
-                # Sort by Planner and Month
-        pivot_df = pivot_df.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
-        
-        
-        pivot_df_1 = comparison_df_1.pivot_table(
-            index=["Planner", "Month"],
-            columns="RC_Status",
-            values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Days_Diff"],
-            aggfunc="sum",
-            fill_value=0,
-        ).reset_index()  # Reset the index to avoid MultiIndex
+        pivot_df = pivot_df[
+            [
+                "Project Planner",
+                "Split MD Date Year-Month Label",
+                "Total_Man-Days_Diff",
+                "Split Man-Days_Diff_Secured",
+                "Split Man-Days_Diff_Unsecured",
+                "Secured_vs_Portfolio_%",
+            ]
+        ].sort_values(by=["Project Planner", "Split MD Date Year-Month Label"])
 
-        # Prepare data for download
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            pivot_df.to_excel(writer, index=True, sheet_name="Comparison Results")
-            pivot_df_1.to_excel(writer, index=True, sheet_name="RC Comparison Results")
-        processed_data = output.getvalue()
+            pivot_df.to_excel(writer, index=False, sheet_name="Comparison Results")
 
-
-                # Flatten multi-level columns
-        pivot_df_1.columns = [f'{col[0]}_{col[1]}' for col in pivot_df_1.columns]
-        pivot_df_1 = pivot_df_1.reset_index()
-       
-        pivot_df_1 = pivot_df_1[['Planner', 'Month',
-
-                              'RC_Man-Day_Diff_RC Not available',
-                              'RC_Man-Day_Diff_RC available']]
-        # Sort by Planner and Month
-        pivot_df_1 = pivot_df_1.sort_values(by=['Planner', 'Month']).reset_index(drop=True)
-
-
-                # Display results
         st.header("Comparison Results")
-        st.subheader("Month-wise Planner Performance Comparison")
         st.dataframe(pivot_df)
 
-                # Display results for "RC Specific"
-        st.header("RC Specific")
-        st.subheader("Month-wise Planner RC Performance")
-        st.dataframe(pivot_df_1) # Corrected variable name to pivot_df_1
-
-        # Download button
         st.download_button(
-            label="Download Comparison Results as Excel",
-            data=processed_data,
+            "Download Results as Excel",
+            data=output.getvalue(),
             file_name="comparison_results.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
-
 if __name__ == "__main__":
     main()
+
 
 
 
