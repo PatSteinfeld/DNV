@@ -156,6 +156,14 @@ def main():
         pivot_df["Total_Man-Days Diff"] = pivot_df["Total_Man-Days_new"] - pivot_df["Total_Man-Days_old"]
         pivot_df["secured vs portfolio(%)"] = pivot_df.get("Man-Days_new_Unsecured", 0) / pivot_df["Total_Man-Days_new"] * 100
 
+        # Validate required columns
+        if not all(col in pivot_df.columns for col in ["Planner", "Month"]):
+            st.error(
+                "The generated pivot table is missing required columns: ['Planner', 'Month'].\n"
+                "Please verify the input data and ensure the grouping and renaming steps are correct."
+            )
+            return
+
         pivot_df = pivot_df[[
             "Planner", "Month",
             "Total_Man-Days Diff",
@@ -175,6 +183,15 @@ def main():
 
         pivot_df_1.columns = [f"{col[0]}_{col[1]}" for col in pivot_df_1.columns]
         pivot_df_1 = pivot_df_1.reset_index()
+
+        # Validate required columns for pivot_df_1
+        if not all(col in pivot_df_1.columns for col in ["Planner", "Month"]):
+            st.error(
+                "The generated pivot table (pivot_df_1) is missing required columns: ['Planner', 'Month'].\n"
+                "Please verify the input data and ensure the grouping and renaming steps are correct."
+            )
+            return
+
         pivot_df_1 = pivot_df_1[[
             "Planner", "Month",
             "RC_Man-Days_Diff_RC Not available",
