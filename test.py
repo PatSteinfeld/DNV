@@ -164,7 +164,7 @@ def main():
         pivot_df["Total_Man-Days_new"] = pivot_df.get("Man-Days_new_Secured", 0) + pivot_df.get("Man-Days_new_Unsecured", 0)
         pivot_df["Total_Man-Days Diff"] = pivot_df["Total_Man-Days_new"] - pivot_df["Total_Man-Days_old"]
         pivot_df["secured vs portfolio(%)"] = (
-            pivot_df.get("Man-Days_new_Unsecured", 0) / pivot_df["Total_Man-Days_new"] * 100
+            pivot_df.get("Man-Days_new_Secured", 0) / pivot_df["Total_Man-Days_new"] * 100
         )
 
         # Sorting and selecting columns
