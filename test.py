@@ -182,8 +182,8 @@ def main():
             pivot_df.get("Man-Days_new_Secured", 0) / pivot_df["Total_portfolio_new"] * 100
         )
         
-        pivot_df_1["RC_Total_portfolio_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_old_RC Not available_NA",0)
-        pivot_df_1["RC_Total_portfolio_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_new_RC Not available_NA",0)
+        pivot_df_1["RC_Total_portfolio_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Days_old_RC Not available_NA",0)
+        pivot_df_1["RC_Total_portfolio_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Days_new_RC Not available_NA",0)
         pivot_df_1["RC_Available_portfolio_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0)
         pivot_df_1["RC_Available_portfolio_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) 
         
