@@ -160,7 +160,7 @@ def main():
             values=["Man-Days_old", "Man-Days_new", "Man-Days_Diff"],
             aggfunc="sum",
             fill_value=0,
-        )
+        ).reset_index()
 
         pivot_df_1 = comparison_df_1.pivot_table(
             index=['Planner', 'Month'],
@@ -168,7 +168,7 @@ def main():
             values=['RC_Man-Days_old', 'RC_Man-Days_new', 'RC_Man-Days_Diff'],  
             aggfunc='sum',  
             fill_value=0  
-        )
+        ).reset_index()
 
         # Flattening column names
         pivot_df.columns = ["_".join(col).strip("_") for col in pivot_df.columns]
