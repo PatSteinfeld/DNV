@@ -88,11 +88,12 @@ def main():
             ),
             axis=1,
         od["RC_Substatus"] = od.apply(
-            lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured" 
-            else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured" 
+            lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured"
+            else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured"
             else "NA",
             axis=1
         )
+
         )
         nw["Type"] = nw["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
@@ -216,6 +217,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
 
 
 
