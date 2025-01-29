@@ -198,7 +198,7 @@ def main():
             "RC_Substatus",
             "RC_Man-Days_Diff_RC available",
             "RC_Man-Days_Diff_RC Not available"
-        ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
+        ]].sort_values(by=["Planner", "Month"]).reset_index(drop=False)
 
         # Output to Streamlit
         st.header("Comparison Results")
