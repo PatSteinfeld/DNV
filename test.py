@@ -189,7 +189,7 @@ def main():
         ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
 
 
-        pivot_df_1 = pivot_df_1[
+        pivot_df_1 = pivot_df_1[[
             "Planner", "Month",
             "RC_Substatus",
             "RC_Man-Days_Diff_RC available",
