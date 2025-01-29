@@ -182,8 +182,8 @@ def main():
             pivot_df.get("Man-Days_new_Secured", 0) / pivot_df["Total_Man-Days_new"] * 100
         )
         
-        pivot_df_1["RC_Total_Man-Days_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_RC Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_RC Unsecured", 0) + pivot_df_1.get("RC_Man-Day_old_RC Not available_NA",0)
-        pivot_df_1["RC_Total_Man-Days_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_RC Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_RC Unsecured", 0) + pivot_df_1.get("RC_Man-Day_new_RC Not available_NA",0)
+        pivot_df_1["RC_Total_Man-Days_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_old_RC Not available_NA",0)
+        pivot_df_1["RC_Total_Man-Days_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_new_RC Not available_NA",0)
         pivot_df_1["RC_Total_Man-Days Diff"] = pivot_df_1["RC_Total_Man-Days_new"] - pivot_df_1["RC_Total_Man-Days_old"]
 
         # Sorting and selecting columns
