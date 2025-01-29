@@ -90,8 +90,8 @@ def main():
         )
 
         od["RC_Substatus"] = od.apply(
-            lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured"
-            else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured"
+            lambda row: "Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured"
+            else "Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured"
             else "NA",
             axis=1
         )
