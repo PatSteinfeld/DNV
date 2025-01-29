@@ -164,8 +164,8 @@ def main():
         ).reset_index()
 
         pivot_df_1 = comparison_df_1.pivot_table(
-            index=['Planner', 'Month'],
-            columns=['RC_Status','RC_Substatus'], 
+            index=['Planner', 'Month', 'RC_Substatus'],
+            columns="RC_Status",
             values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Days_Diff"],
             aggfunc="sum",
             fill_value=0,
@@ -173,7 +173,7 @@ def main():
 
         # Flattening column names
         pivot_df.columns = ["_".join(col).strip("_") for col in pivot_df.columns]
-        pivot_df_1.columns = [f'{col[0]}_{col[1]}_{col[2]}' for col in pivot_df_1.columns]
+        pivot_df_1.columns = ["_".join(col).strip("_") for col in pivot_df_1.columns]
 
         # Adding additional columns
         pivot_df["Total_Man-Days_old"] = pivot_df.get("Man-Days_old_Secured", 0) + pivot_df.get("Man-Days_old_Unsecured", 0)
@@ -190,6 +190,18 @@ def main():
             "Man-Days_Diff_Secured",
             "Man-Days_Diff_Unsecured",
             "secured vs portfolio(%)",
+        ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
+
+
+        pivot_df_1 = pivot_df_1[[
+            "Planner", "Month",
+            "RC_Substatus",
+            "RC_Man-Days_Diff_RC available",
+            "RC_Man-Days_Diff_RC Not available",
+            "RC_Man-Days_new_RC available",
+            "RC_Man-Days_old_RC available",
+            "RC_Man-Days_new_RC Not available",
+            "RC_Man-Days_old_RC Not available"
         ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
 
 
