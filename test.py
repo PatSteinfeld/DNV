@@ -175,21 +175,21 @@ def main():
         pivot_df_1.columns = [f'{col[0]}_{col[1]}_{col[2]}' for col in pivot_df_1.columns]
 
         # Adding additional columns
-        pivot_df["Total_Man-Days_old"] = pivot_df.get("Man-Days_old_Secured", 0) + pivot_df.get("Man-Days_old_Unsecured", 0)
-        pivot_df["Total_Man-Days_new"] = pivot_df.get("Man-Days_new_Secured", 0) + pivot_df.get("Man-Days_new_Unsecured", 0)
-        pivot_df["Total_Man-Days Diff"] = pivot_df["Total_Man-Days_new"] - pivot_df["Total_Man-Days_old"]
+        pivot_df["Total_portfolio_old"] = pivot_df.get("Man-Days_old_Secured", 0) + pivot_df.get("Man-Days_old_Unsecured", 0)
+        pivot_df["Total_portfolio_new"] = pivot_df.get("Man-Days_new_Secured", 0) + pivot_df.get("Man-Days_new_Unsecured", 0)
+        pivot_df["Total_portfolio Diff"] = pivot_df["Total_portfolio_new"] - pivot_df["Total_portfolio_old"]
         pivot_df["secured vs portfolio(%)"] = (
-            pivot_df.get("Man-Days_new_Secured", 0) / pivot_df["Total_Man-Days_new"] * 100
+            pivot_df.get("Man-Days_new_Secured", 0) / pivot_df["Total_portfolio_new"] * 100
         )
         
-        pivot_df_1["RC_Total_Man-Days_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_old_RC Not available_NA",0)
-        pivot_df_1["RC_Total_Man-Days_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_new_RC Not available_NA",0)
-        pivot_df_1["RC_Total_Man-Days Diff"] = pivot_df_1["RC_Total_Man-Days_new"] - pivot_df_1["RC_Total_Man-Days_old"]
+        pivot_df_1["RC_Total_portfolio_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_old_RC Not available_NA",0)
+        pivot_df_1["RC_Total_portfolio_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Day_new_RC Not available_NA",0)
+        pivot_df_1["RC_Total_portfolio Diff"] = pivot_df_1["RC_Total_portfolios_new"] - pivot_df_1["RC_Total_portfolio_old"]
 
         # Sorting and selecting columns
         pivot_df = pivot_df[[
             "Planner", "Month",
-            "Total_Man-Days Diff",
+            "Total_portfolio Diff",
             "Man-Days_Diff_Secured",
             "Man-Days_Diff_Unsecured",
             "secured vs portfolio(%)",
