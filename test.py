@@ -144,7 +144,7 @@ def main():
             on=["Planner", "Month", "RC_Status", "RC_Substatus"],
             suffixes=("_old", "_new"),
             how="outer",
-        )
+        ).fillna(0) 
 
         # Calculating differences
         comparison_df["Man-Days_Diff"] = (
