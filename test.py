@@ -164,16 +164,16 @@ def main():
         ).reset_index()
 
         pivot_df_1 = comparison_df_1.pivot_table(
-            index=['Planner', 'Month', 'RC_Substatus'],
-            columns="RC_Status",
-            values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Days_Diff"],
-            aggfunc="sum",
-            fill_value=0,
-        ).reset_index()
+            index=['Planner', 'Month'],
+            columns=['RC_Status','RC_Substatus'],  
+            values=['RC_Man-Days_old', 'RC_Man-Days_new', 'RC_Man-Day_Diff'],  
+            aggfunc='sum',  
+            fill_value=0  
+        )
 
         # Flattening column names
         pivot_df.columns = ["_".join(col).strip("_") for col in pivot_df.columns]
-        pivot_df_1.columns = ["_".join(col).strip("_") for col in pivot_df_1.columns]
+        pivot_df_1.columns = [f'{col[0]}_{col[1]}_{col[2]}' for col in pivot_df_1.columns]
 
         # Adding additional columns
         pivot_df["Total_Man-Days_old"] = pivot_df.get("Man-Days_old_Secured", 0) + pivot_df.get("Man-Days_old_Unsecured", 0)
@@ -182,7 +182,12 @@ def main():
         pivot_df["secured vs portfolio(%)"] = (
             pivot_df.get("Man-Days_new_Secured", 0) / pivot_df["Total_Man-Days_new"] * 100
         )
-
+        pivot_df_1.columns = [f'{col[0]}_{col[1]}_{col[2]}' for col in pivot_df_1.columns]
+        pivot_df_1["RC_Total_Man-Days_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_RC Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_RC Unsecured", 0) + pivot_df_1.get("RC_Man-Day_old_RC Not available_NA",0)
+        pivot_df_1["RC_Total_Man-Days_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_RC Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_RC Unsecured", 0) + pivot_df_1.get("RC_Man-Day_new_RC Not available_NA",0)
+        pivot_df_1["RC_Total_Man-Days Diff"] = pivot_df_1["RC_Total_Man-Days_new"] - pivot_df_1["RC_Total_Man-Days_old"]
+        
+        
         # Sorting and selecting columns
         pivot_df = pivot_df[[
             "Planner", "Month",
