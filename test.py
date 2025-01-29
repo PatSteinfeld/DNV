@@ -87,6 +87,12 @@ def main():
                 else "Not An RC"
             ),
             axis=1,
+        od["RC_Substatus"] = od.apply(
+            lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured" 
+            else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured" 
+            else "NA",
+            axis=1
+        )
         )
         nw["Type"] = nw["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
@@ -102,17 +108,23 @@ def main():
                 else "Not An RC"
             ),
             axis=1,
+        nw["RC_Substatus"] = nw.apply(
+            lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured" 
+            else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured" 
+            else "NA",
+            axis=1
+        )
         )
 
         # Aggregating results
         old_res = od.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])["Split Man-Days"].sum().reset_index()
         old_res.columns = ["Planner", "Month", "Type", "Man-Days"]
-        old_res_1 = od.groupby(["Project Planner", "Split MD Date Year-Month Label", "RC_Status"])["Split Man-Days"].sum().reset_index()
-        old_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Man-Days"]
+        old_res_1 = od.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'RC_Status','RC_Substatus'])['Split Man-Days'].sum().reset_index()
+        old_res_1.columns = ['Planner', 'Month', 'RC_Status','RC_Substatus', 'RC_Man-Days']
         new_res = nw.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])["Split Man-Days"].sum().reset_index()
         new_res.columns = ["Planner", "Month", "Type", "Man-Days"]
-        new_res_1 = nw.groupby(["Project Planner", "Split MD Date Year-Month Label", "RC_Status"])["Split Man-Days"].sum().reset_index()
-        new_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Man-Days"]
+        new_res_1 = nw.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'RC_Status','RC_Substatus'])['Split Man-Days'].sum().reset_index()
+        new_res_1.columns = ['Planner', 'Month', 'RC_Status','RC_Substatus', 'RC_Man-Days']
 
         # Merging results
         comparison_df = pd.merge(
@@ -125,7 +137,7 @@ def main():
         comparison_df_1 = pd.merge(
             old_res_1,
             new_res_1,
-            on=["Planner", "Month", "RC_Status"],
+            on=["Planner", "Month", "RC_Status", "RC_Substatus"],
             suffixes=("_old", "_new"),
             how="outer",
         )
@@ -148,7 +160,7 @@ def main():
         ).reset_index()
 
         pivot_df_1 = comparison_df_1.pivot_table(
-            index=["Planner", "Month"],
+            index=['Planner', 'Month', 'RC_Substatus'],
             columns="RC_Status",
             values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Days_Diff"],
             aggfunc="sum",
@@ -174,6 +186,14 @@ def main():
             "Man-Days_Diff_Secured",
             "Man-Days_Diff_Unsecured",
             "secured vs portfolio(%)",
+        ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
+
+
+        pivot_df_1 = pivot_df_1[
+            "Planner", "Month",
+            "RC_Substatus",
+            "RC_Man-Days_Diff_RC available",
+            "RC_Man-Days_Diff_RC Not available"
         ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
 
         # Output to Streamlit
