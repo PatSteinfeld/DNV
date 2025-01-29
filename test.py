@@ -166,7 +166,7 @@ def main():
         pivot_df_1 = comparison_df_1.pivot_table(
             index=['Planner', 'Month'],
             columns=['RC_Status','RC_Substatus'],  
-            values=['RC_Man-Days_old', 'RC_Man-Days_new', 'RC_Man-Day_Diff'],  
+            values=['RC_Man-Days_old', 'RC_Man-Days_new', 'RC_Man-Days_Diff'],  
             aggfunc='sum',  
             fill_value=0  
         )
