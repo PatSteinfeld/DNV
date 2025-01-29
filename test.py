@@ -195,6 +195,18 @@ def main():
             "secured vs portfolio(%)",
         ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
 
+
+        pivot_df = pivot_df[[
+            "Planner__", "Month__",
+            "RC_Total_portfolio_new",
+            "RC_Man-Days_new_RC available_Secured",
+            "RC_Man-Days_new_RC available_Unsecured",
+            "RC_Man-Days_new_RC Not available_NA",
+            "RC_Total_portfolio Diff",
+            "RC_Man-Days_Diff_RC available_Secured",
+            "RC_Man-Days_Diff_RC available_Unsecured",
+        ]].sort_values(by=["Planner__", "Month__"]).reset_index(drop=True)
+
         # Output to Streamlit
         st.header("Comparison Results")
         st.dataframe(pivot_df)
