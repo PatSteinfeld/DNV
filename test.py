@@ -7,6 +7,7 @@ import hmac
 def main():
     def check_password():
         """Returns `True` if the user had a correct password."""
+
         def login_form():
             with st.form("Credentials"):
                 st.text_input("Username", key="username")
@@ -32,7 +33,7 @@ def main():
 
         login_form()
         if "password_correct" in st.session_state:
-            st.error("\ud83d\ude15 User not known or password incorrect")
+            st.error("😕 User not known or password incorrect")
         return False
 
     if not check_password():
@@ -58,35 +59,32 @@ def main():
         ]
 
         if not all(col in old_data.columns for col in required_columns):
-            st.error(
-                f"The old file is missing one or more required columns: {required_columns}"
-            )
+            st.error(f"The old file is missing one or more required columns: {required_columns}")
             return
 
         if not all(col in new_data.columns for col in required_columns):
-            st.error(
-                f"The new file is missing one or more required columns: {required_columns}"
-            )
+            st.error(f"The new file is missing one or more required columns: {required_columns}")
             return
 
         od = old_data[required_columns]
         nw = new_data[required_columns]
 
-        # Creating new column to categorize man-days
+        # Categorizing man-days
         od["Type"] = od["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
+
         od["RC_Status"] = od.apply(
             lambda row: "RC Not available"
-            if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
+            if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"]
             else (
                 "RC available"
-                if row["Activity Name"] == "RC"
-                and row["Project Status"] in ["Reviewed", "Review In Progress"]
+                if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed", "Review In Progress"]
                 else "Not An RC"
             ),
             axis=1,
+        )
+
         od["RC_Substatus"] = od.apply(
             lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured"
             else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured"
@@ -94,62 +92,53 @@ def main():
             axis=1
         )
 
-        )
         nw["Type"] = nw["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
         )
+
         nw["RC_Status"] = nw.apply(
             lambda row: "RC Not available"
-            if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
+            if row["Activity Name"] == "RC" and row["Project Status"] in ["Quote Revision", "Final PA Review"]
             else (
                 "RC available"
-                if row["Activity Name"] == "RC"
-                and row["Project Status"] in ["Reviewed", "Review In Progress"]
+                if row["Activity Name"] == "RC" and row["Project Status"] in ["Reviewed", "Review In Progress"]
                 else "Not An RC"
             ),
             axis=1,
+        )
+
         nw["RC_Substatus"] = nw.apply(
-            lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured" 
-            else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured" 
+            lambda row: "RC Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured"
+            else "RC Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured"
             else "NA",
             axis=1
-        )
         )
 
         # Aggregating results
         old_res = od.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])["Split Man-Days"].sum().reset_index()
         old_res.columns = ["Planner", "Month", "Type", "Man-Days"]
-        old_res_1 = od.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'RC_Status','RC_Substatus'])['Split Man-Days'].sum().reset_index()
-        old_res_1.columns = ['Planner', 'Month', 'RC_Status','RC_Substatus', 'RC_Man-Days']
+
+        old_res_1 = od.groupby(["Project Planner", "Split MD Date Year-Month Label", "RC_Status", "RC_Substatus"])["Split Man-Days"].sum().reset_index()
+        old_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Substatus", "RC_Man-Days"]
+
         new_res = nw.groupby(["Project Planner", "Split MD Date Year-Month Label", "Type"])["Split Man-Days"].sum().reset_index()
         new_res.columns = ["Planner", "Month", "Type", "Man-Days"]
-        new_res_1 = nw.groupby(['Project Planner', 'Split MD Date Year-Month Label', 'RC_Status','RC_Substatus'])['Split Man-Days'].sum().reset_index()
-        new_res_1.columns = ['Planner', 'Month', 'RC_Status','RC_Substatus', 'RC_Man-Days']
+
+        new_res_1 = nw.groupby(["Project Planner", "Split MD Date Year-Month Label", "RC_Status", "RC_Substatus"])["Split Man-Days"].sum().reset_index()
+        new_res_1.columns = ["Planner", "Month", "RC_Status", "RC_Substatus", "RC_Man-Days"]
 
         # Merging results
         comparison_df = pd.merge(
-            old_res,
-            new_res,
-            on=["Planner", "Month", "Type"],
-            suffixes=("_old", "_new"),
-            how="outer",
+            old_res, new_res, on=["Planner", "Month", "Type"], suffixes=("_old", "_new"), how="outer"
         )
+
         comparison_df_1 = pd.merge(
-            old_res_1,
-            new_res_1,
-            on=["Planner", "Month", "RC_Status", "RC_Substatus"],
-            suffixes=("_old", "_new"),
-            how="outer",
+            old_res_1, new_res_1, on=["Planner", "Month", "RC_Status", "RC_Substatus"], suffixes=("_old", "_new"), how="outer"
         )
 
         # Calculating differences
-        comparison_df["Man-Days_Diff"] = (
-            comparison_df["Man-Days_new"] - comparison_df["Man-Days_old"]
-        )
-        comparison_df_1["RC_Man-Days_Diff"] = (
-            comparison_df_1["RC_Man-Days_new"] - comparison_df_1["RC_Man-Days_old"]
-        )
+        comparison_df["Man-Days_Diff"] = comparison_df["Man-Days_new"] - comparison_df["Man-Days_old"]
+        comparison_df_1["RC_Man-Days_Diff"] = comparison_df_1["RC_Man-Days_new"] - comparison_df_1["RC_Man-Days_old"]
 
         # Creating pivot tables
         pivot_df = comparison_df.pivot_table(
@@ -161,7 +150,7 @@ def main():
         ).reset_index()
 
         pivot_df_1 = comparison_df_1.pivot_table(
-            index=['Planner', 'Month', 'RC_Substatus'],
+            index=["Planner", "Month", "RC_Substatus"],
             columns="RC_Status",
             values=["RC_Man-Days_old", "RC_Man-Days_new", "RC_Man-Days_Diff"],
             aggfunc="sum",
@@ -171,31 +160,6 @@ def main():
         # Flattening column names
         pivot_df.columns = ["_".join(col).strip("_") for col in pivot_df.columns]
         pivot_df_1.columns = ["_".join(col).strip("_") for col in pivot_df_1.columns]
-
-        # Adding additional columns
-        pivot_df["Total_Man-Days_old"] = pivot_df.get("Man-Days_old_Secured", 0) + pivot_df.get("Man-Days_old_Unsecured", 0)
-        pivot_df["Total_Man-Days_new"] = pivot_df.get("Man-Days_new_Secured", 0) + pivot_df.get("Man-Days_new_Unsecured", 0)
-        pivot_df["Total_Man-Days Diff"] = pivot_df["Total_Man-Days_new"] - pivot_df["Total_Man-Days_old"]
-        pivot_df["secured vs portfolio(%)"] = (
-            pivot_df.get("Man-Days_new_Secured", 0) / pivot_df["Total_Man-Days_new"] * 100
-        )
-
-        # Sorting and selecting columns
-        pivot_df = pivot_df[[
-            "Planner", "Month",
-            "Total_Man-Days Diff",
-            "Man-Days_Diff_Secured",
-            "Man-Days_Diff_Unsecured",
-            "secured vs portfolio(%)",
-        ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
-
-
-        pivot_df_1 = pivot_df_1[[
-            "Planner", "Month",
-            "RC_Substatus",
-            "RC_Man-Days_Diff_RC available",
-            "RC_Man-Days_Diff_RC Not available"
-        ]].sort_values(by=["Planner", "Month"]).reset_index(drop=True)
 
         # Output to Streamlit
         st.header("Comparison Results")
@@ -207,6 +171,7 @@ def main():
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
             pivot_df.to_excel(writer, index=False, sheet_name="Comparison Results")
             pivot_df_1.to_excel(writer, index=False, sheet_name="RC Comparison Results")
+
         st.download_button(
             label="Download Results",
             data=output.getvalue(),
@@ -217,6 +182,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
