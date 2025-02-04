@@ -230,6 +230,42 @@ def main():
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
+      # Upload button for selecting the Excel file with charts to update
+        st.header("Upload the Excel File with Charts to Update")
+        excel_file = st.file_uploader("Upload the Excel file with charts", type=["xlsx"])
+
+        if excel_file:
+            if st.button("Update Excel File with Charts"):
+                try:
+                    # Save uploaded file temporarily
+                    temp_path = "temp_updated_excel.xlsx"
+                    with open(temp_path, "wb") as f:
+                        f.write(excel_file.getbuffer())
+
+                    # Update the Excel file
+                    update_excel_results(temp_path, pivot_df)
+
+                    # Provide updated file for download
+                    with open(temp_path, "rb") as f:
+                        st.download_button(
+                            label="Download Updated Excel File",
+                            data=f,
+                            file_name="Updated_Performance_Report.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        )
+                    st.success("Excel file updated successfully! Charts will reflect new data.")
+
+                except Exception as e:
+                    st.error(f"Error updating Excel file: {e}")
+
+def update_excel_results(file_path, data, sheet_name="Comparison Results"):
+    """Updates the given Excel file with new data while keeping existing charts intact."""
+    book = load_workbook(file_path)  # Load existing Excel file
+    
+    with pd.ExcelWriter(file_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+        writer.book = book
+        data.to_excel(writer, sheet_name=sheet_name, index=False)
+        writer.close()
 
 if __name__ == "__main__":
     main()
