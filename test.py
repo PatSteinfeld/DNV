@@ -153,10 +153,11 @@ def update_excel_results(file_path, data1, data2):
     book = load_workbook(file_path)  # Load existing Excel file
 
     with pd.ExcelWriter(file_path, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-        writer.book = book
+        writer._book = book  # Assign workbook correctly
         data1.to_excel(writer, sheet_name="Comparison Results", index=False)
         data2.to_excel(writer, sheet_name="RC Specefic", index=False)
-        writer.close()
+        writer._save()  # Explicitly save changes
+
 
 if __name__ == "__main__":
     main()
