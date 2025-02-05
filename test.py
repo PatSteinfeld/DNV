@@ -90,12 +90,15 @@ def main():
 
         od["RC_Substatus"] = od.apply(
             lambda row: "Secured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"] and row["Type"] == "Secured"
+            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
+            and row["Type"] == "Secured"
             else "Unsecured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Reviewed", "Review In Progress"]and row["Type"] == "Unsecured"
+            and row["Project Status"] in ["Reviewed", "Review In Progress"]
+            and row["Type"] == "Unsecured"
             else "NA",
             axis=1
         )
+
         
         nw["Type"] = nw["Activity Sub Status"].apply(
             lambda x: "Secured" if x == "Customer accepted" else "Unsecured"
@@ -115,12 +118,15 @@ def main():
 
         nw["RC_Substatus"] = nw.apply(
             lambda row: "Secured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"] and row["Type"] == "Secured"
+            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
+            and row["Type"] == "Secured"
             else "Unsecured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Reviewed", "Review In Progress"]and row["Type"] == "Unsecured"
+            and row["Project Status"] in ["Reviewed", "Review In Progress"]
+            and row["Type"] == "Unsecured"
             else "NA",
             axis=1
         )
+
         
 
         # Aggregating results
@@ -238,6 +244,20 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
