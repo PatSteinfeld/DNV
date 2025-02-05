@@ -89,12 +89,8 @@ def main():
         )
 
         od["RC_Substatus"] = od.apply(
-            lambda row: "Secured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
-            and row["Type"] == "Secured"
-            else "Unsecured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Reviewed", "Review In Progress"]
-            and row["Type"] == "Unsecured"
+            lambda row: "Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured"
+            else "Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured"
             else "NA",
             axis=1
         )
@@ -117,12 +113,8 @@ def main():
         )
 
         nw["RC_Substatus"] = nw.apply(
-            lambda row: "Secured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Quote Revision", "Final PA Review"]
-            and row["Type"] == "Secured"
-            else "Unsecured" if row["Activity Name"] == "RC"
-            and row["Project Status"] in ["Reviewed", "Review In Progress"]
-            and row["Type"] == "Unsecured"
+            lambda row: "Secured" if row["RC_Status"] == "RC available" and row["Type"] == "Secured"
+            else "Unsecured" if row["RC_Status"] == "RC available" and row["Type"] == "Unsecured"
             else "NA",
             axis=1
         )
