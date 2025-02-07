@@ -186,11 +186,11 @@ def main():
         
         pivot_df_1["RC_Total_portfolio_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Days_old_RC Not available_NA",0)
         pivot_df_1["RC_Total_portfolio_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0) + pivot_df_1.get("RC_Man-Days_new_RC Not available_NA",0)
-        pivot_df_1["RC_Available_portfolio_new"] = pivot_df_1.get("RC_Man-Days_new_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_new_RC available_Unsecured", 0)
-        pivot_df_1["RC_Available_portfolio_old"] = pivot_df_1.get("RC_Man-Days_old_RC available_Secured", 0) + pivot_df_1.get("RC_Man-Days_old_RC available_Unsecured", 0) 
+        pivot_df_1["RC_Not Available_portfolio_new"] =  pivot_df_1.get("RC_Man-Days_new_RC Not available_NA",0)
+        pivot_df_1["RC_Not Available_portfolio_old"] =pivot_df_1.get("RC_Man-Days_new_RC Not available_NA",0)
         
         pivot_df_1["RC_Total_portfolio Diff"] = pivot_df_1["RC_Total_portfolio_new"] - pivot_df_1["RC_Total_portfolio_old"]
-        pivot_df_1["RC_Available_portfolio Diff"] = pivot_df_1["RC_Available_portfolio_new"] - pivot_df_1["RC_Available_portfolio_old"]
+        pivot_df_1["RC_Not Available_portfolio Diff"] = pivot_df_1["RC_Not Available_portfolio_new"] - pivot_df_1["RC_Not Available_portfolio_old"]
 
         # Sorting and selecting columns
         pivot_df = pivot_df[[
@@ -207,11 +207,11 @@ def main():
             "RC_Total_portfolio_new",
             "RC_Man-Days_new_RC available_Secured",
             "RC_Man-Days_new_RC available_Unsecured",
-            "RC_Available_portfolio_new",
+            "RC_Not Available_portfolio_new",
             "RC_Total_portfolio Diff",
             "RC_Man-Days_Diff_RC available_Secured",
             "RC_Man-Days_Diff_RC available_Unsecured",
-            "RC_Available_portfolio Diff",
+            "RC_Not Available_portfolio Diff",
 
         ]].sort_values(by=["Planner__", "Month__"]).reset_index(drop=True)
 
