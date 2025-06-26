@@ -1,1 +1,64 @@
+Day 1
+Grant access to mail box 
+Step 1 : Login to osl3627 with adm account 
+Step 2 : go to MIM for owners info / check for the access / Wapproval of the user for the mail box 
+Step 3 : give the user the names of the owners to get the approval 
+Step 4 : once the access is granted we can grant the access so for that we will go to exchange portal-> mailbox->search for the mailbox->
+delegation->grant the access->full access the send as access if needed 
 
+Giving rights to user for project folder
+Step 1 : PMT tool to find folder name , owner & server
+Step 2 : Owner needs to approve aske user to take the same
+Step 3 : We login to the server OSL3627 then open the active directory
+Step 4 : Find the group folder | Proj_ _ _ foldername| eg |ProjOSL Accounting & Finance |(first 3 letters of the server name is to be added in the blank space 
+Step 5 : Open the group then go to members then add the username then ok 
+Step 6 : If the user don't have the access to this server then they need to manually map the server)
+Step 7 : Go to file explorer-> computer number-> map network drive-> give any alphabet to the drive name except p then \\OLS7002\projects(server name)-> check the option Reconnect in sign in.
+WAIT PERIOD IS 3 HOURS
+
+For Project Folder creation 
+WAIT FOR 1 HOUR BEFORE CREATION
+Step 1 : login to Cyberark->OSL3627 server(check for free room then connect->open windows power shell->paste the script 
+Run the script:
+ 
+1. On Windows PowerShell prompt, type D: and click Enter
+ 
+2. Then type CD D:\Scripts\ProjectFolders and click Enter
+ 
+3. Run the cmdlet: PS D:\scripts\ProjectFolders> .\CreateNewProjectFolder.ps1 -Servername XXX -Folder "Name of the project folder" 
+where XXX is the server name, for example OSL7001, RIO1001, HOU7001, etc 
+Attention: the project folder name must be between quotation marks " "
+WAIT PERIOD IS 3 HOURS
+NOTE: We have to check in once the process is done 
+
+Bit locker Recovery password
+NOTE :for that first we need to cross check if the user is real (hr question has to be asked from employee info portal)
+Step 1 : Login to OSL3627 server-> AD(Active Directory)->verit.dnv.com(there are 2 options )
+Option 1 : Go to find & enter the computer number (displayed in the users pc) if it's not displayed go to option 2 
+Option 2 : go to find bitlocker recovery password & enter the first 8 digits of the character present in the passwordID in bottom left/right corner of the users pc. 
+
+Take Remote access 
+Step 1 : Go to msra in the search box-> help someoe who has invited you-> advance connection options (will need the computer number or ip address for that Step 2)
+Step 2 : https://itgsc.dnv.com/showip send this link to user or in the command prompt of user will have to hostname(for computer number) or ipconfig(for ip address)
+
+Day 2 (25th June 2025)
+Creation of Distribution list
+Note : KBA0002193-(kb article for reference)
+Step 1 : Connect to osl3627 server 
+Step 2 : Click on the following link "https://osl2592.verit.dnv.com/ecp/"-> Groups->"+"->Distribution Group->Fill the display name and alias (format starts with "All in" followed by name of the group & alias shouldn't have any space)
+Step 3 : Go to organization unit-> Verit.dnv.com-> Corp-> Select the nearby station of the user(depends on the location)-> Groups-> Add the owner name-> Select close options for both
+Step 4 : Go to AD-> Search for the group name-> Managed by (check on manager can update)
+Step 5 : To add group members go to members and add.
+
+Deskside list 
+Its a list containing the deskside list for different countries.
+will fid the list on docs
+
+Gandalf
+Admin for local machines.link "https://one.dnv.com/admpwd/" (Outdated)
+Step 1 : Open the link then type the pc name of the user the password 
+Step 2 : User name"pcname\gandolf" then enter the password (Doubt)
+
+Adm account Creation
+Step 1 : log in to osl3627 server-> go to mim portal-> admin account request
+Step 2 : click on new-> search for the signature of the user-> provide justification(in short just for reference)-> click on next then finish.
