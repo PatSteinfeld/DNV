@@ -10,7 +10,7 @@ from langchain.chat_models import ChatOpenAI
 
 # --- Streamlit UI Setup ---
 st.set_page_config(page_title="IT Support Chatbot", layout="wide")
-st.title("🛠️ IT Support Engineer - Notes Chatbot")
+st.title("🛠️ IT Support Engineer – Notes Chatbot")
 
 # --- API Key Input ---
 openai_api_key = st.sidebar.text_input("🔑 Enter your OpenAI API Key", type="password")
@@ -19,22 +19,25 @@ openai_api_key = st.sidebar.text_input("🔑 Enter your OpenAI API Key", type="p
 def load_notes():
     docs = []
     notes_path = Path("notes")
+    
     if not notes_path.exists():
-        st.warning("No 'notes/' folder found. Please create one and add .txt files.")
+        st.warning("⚠️ No 'notes/' folder found. Please create one and upload at least one .txt file.")
         return docs
 
-    files = list(notes_path.glob("*.txt"))
-    if not files:
-        st.warning("No .txt files found in the 'notes/' folder.")
+    txt_files = list(notes_path.glob("*.txt"))
+    if not txt_files:
+        st.warning("⚠️ No .txt files found inside the 'notes/' folder.")
         return docs
 
-    for file in files:
+    for file in txt_files:
+        st.info(f"📄 Loaded: {file.name}")
         loader = TextLoader(str(file), encoding="utf-8")
         docs.extend(loader.load())
+    
     return docs
 
 # --- Build QA Chain ---
-@st.cache_resource(show_spinner="Indexing notes...")
+@st.cache_resource(show_spinner="🔍 Indexing your notes...")
 def setup_qa():
     documents = load_notes()
     if not documents:
@@ -43,7 +46,7 @@ def setup_qa():
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     texts = splitter.split_documents(documents)
     if not texts:
-        st.warning("Your notes are loaded, but no readable chunks were created.")
+        st.warning("⚠️ Your notes were found but couldn't be split into readable chunks.")
         return None
 
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
@@ -64,14 +67,15 @@ if openai_api_key:
     if qa:
         query = st.text_input("💬 Ask something from your notes:")
         if query:
-            with st.spinner("Searching your notes..."):
+            with st.spinner("🤖 Thinking..."):
                 try:
                     response = qa.run(query)
                     st.success(response)
                 except Exception as e:
-                    st.error(f"An error occurred while processing the query:\n{e}")
+                    st.error(f"❌ Error: {e}")
 else:
-    st.info("Please enter your OpenAI API key in the sidebar to begin.")
+    st.info("💡 Please enter your OpenAI API key in the sidebar to begin.")
+
 
 
 
