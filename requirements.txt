@@ -1,4 +1,10 @@
 streamlit
-pandas
-openpyxl
+openai
+langchain
+faiss-cpu
+tiktoken
+unstructured
+pdfminer.six
+python-docx
+
 
