@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import re
 from pathlib import Path
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
@@ -8,32 +9,36 @@ from langchain.document_loaders import TextLoader
 from langchain.chains import RetrievalQA
 from langchain.chat_models import ChatOpenAI
 
-# --- Streamlit UI Setup ---
+# --- Streamlit Page Config ---
 st.set_page_config(page_title="IT Support Chatbot", layout="wide")
 st.title("🛠️ IT Support Engineer – Notes Chatbot")
 
-# --- Sidebar API Key ---
+# --- API Key Sidebar ---
 openai_api_key = st.sidebar.text_input("🔑 Enter your OpenAI API Key", type="password")
 
-# --- Ensure notes/ folder exists ---
+# --- Ensure 'notes/' directory exists ---
 NOTES_DIR = Path("notes")
 NOTES_DIR.mkdir(exist_ok=True)
 
-# --- Upload Notes ---
+# --- Upload & Save File ---
+def clean_filename(name):
+    """Sanitize filename: remove spaces & special characters."""
+    return re.sub(r'[^a-zA-Z0-9_.-]', '_', name)
+
 uploaded_file = st.sidebar.file_uploader("📤 Upload a .txt notes file", type="txt")
 
 if uploaded_file is not None:
-    file_path = NOTES_DIR / uploaded_file.name
+    safe_name = clean_filename(uploaded_file.name)
+    file_path = NOTES_DIR / safe_name
     with open(file_path, "wb") as f:
         f.write(uploaded_file.getbuffer())
-    st.sidebar.success(f"Uploaded: {uploaded_file.name}")
+    st.sidebar.success(f"✅ Uploaded: {safe_name}")
 
 # --- Load Notes Dynamically ---
 def load_notes():
     docs = []
     txt_files = list(NOTES_DIR.glob("*.txt"))
-
-    st.write("📁 Files found in notes/:", [f.name for f in NOTES_DIR.glob("*")])  # Debug
+    st.sidebar.write("🗂️ Files in notes/:", [f.name for f in txt_files])  # Debug info
 
     if not txt_files:
         st.warning("⚠️ No .txt files found inside the 'notes/' folder.")
@@ -46,7 +51,7 @@ def load_notes():
 
     return docs
 
-# --- Build QA System ---
+# --- Setup QA Chain ---
 @st.cache_resource(show_spinner="🔍 Indexing your notes...")
 def setup_qa():
     documents = load_notes()
@@ -56,7 +61,7 @@ def setup_qa():
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     texts = splitter.split_documents(documents)
     if not texts:
-        st.warning("⚠️ Your notes were found but couldn't be split into readable chunks.")
+        st.warning("⚠️ Your notes were loaded but could not be chunked.")
         return None
 
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
@@ -85,6 +90,7 @@ if openai_api_key:
                     st.error(f"❌ Error: {e}")
 else:
     st.info("💡 Please enter your OpenAI API key in the sidebar to begin.")
+
 
 
 
