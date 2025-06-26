@@ -12,19 +12,29 @@ from langchain.chat_models import ChatOpenAI
 st.set_page_config(page_title="IT Support Chatbot", layout="wide")
 st.title("🛠️ IT Support Engineer – Notes Chatbot")
 
-# --- API Key Input ---
+# --- Sidebar API Key ---
 openai_api_key = st.sidebar.text_input("🔑 Enter your OpenAI API Key", type="password")
 
-# --- Load Notes ---
+# --- Ensure notes/ folder exists ---
+NOTES_DIR = Path("notes")
+NOTES_DIR.mkdir(exist_ok=True)
+
+# --- Upload Notes ---
+uploaded_file = st.sidebar.file_uploader("📤 Upload a .txt notes file", type="txt")
+
+if uploaded_file is not None:
+    file_path = NOTES_DIR / uploaded_file.name
+    with open(file_path, "wb") as f:
+        f.write(uploaded_file.getbuffer())
+    st.sidebar.success(f"Uploaded: {uploaded_file.name}")
+
+# --- Load Notes Dynamically ---
 def load_notes():
     docs = []
-    notes_path = Path("notes")
-    
-    if not notes_path.exists():
-        st.warning("⚠️ No 'notes/' folder found. Please create one and upload at least one .txt file.")
-        return docs
+    txt_files = list(NOTES_DIR.glob("*.txt"))
 
-    txt_files = list(notes_path.glob("*.txt"))
+    st.write("📁 Files found in notes/:", [f.name for f in NOTES_DIR.glob("*")])  # Debug
+
     if not txt_files:
         st.warning("⚠️ No .txt files found inside the 'notes/' folder.")
         return docs
@@ -33,10 +43,10 @@ def load_notes():
         st.info(f"📄 Loaded: {file.name}")
         loader = TextLoader(str(file), encoding="utf-8")
         docs.extend(loader.load())
-    
+
     return docs
 
-# --- Build QA Chain ---
+# --- Build QA System ---
 @st.cache_resource(show_spinner="🔍 Indexing your notes...")
 def setup_qa():
     documents = load_notes()
